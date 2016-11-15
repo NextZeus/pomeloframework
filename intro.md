@@ -74,6 +74,9 @@
 	* 后端向前端请求session信息
 	* 后端通过channel推送消息时对前端服务器发起的rpc调用
 	* 前端服务器将用户请求给后端服务器
+* 参数
+	* session , args , callback
+	* 第一个参数session是用来做路由计算的
 
 #### route router
 * route用来标识一个具体服务或者客户端接受服务端推送消息的位置; 例如"chat.chatHandler.send", chat就是服务器类型，chatHandler是chat服务器中定义的一个Handler，send则为这个Handler中的一个handle方法
@@ -86,13 +89,13 @@
 * BackendSessionService创建 BackendSession
 * SessionService,FrontendSession,Session
 
-##### gate session
+##### gate session [FrontendSession]
 ![gateSession](http://img.hb.aicdn.com/6116eb2f3cbbd164efc33424b96f4a45636ae6b15fc52-Qe0ABz_fw658)
 
-##### connector session
+##### connector session [FrontendSession]
 ![connectorSession](http://img.hb.aicdn.com/156999223104cd6cd65746fbbf71c46330ad30fb689d2-KXxy7V_fw658)
 
-##### backend session[chat]
+##### chat session [BackendSession]
 ![1](http://img.hb.aicdn.com/9e8e5463f176e4dd7dcaf908d17baf85df69cfd566f87-DkjEXv_fw658)
 ![](http://img.hb.aicdn.com/5539b15e78fc1f4b55e465ce49dccd5621782bc851619-7rBA0q_fw658)
 
@@ -116,10 +119,26 @@
 #### error handler
 * 处理全局异常情况的地方 可发邮件通知维护
 
+#### component
+* pomelo 核心是由一系列松耦合的component组成
+* 可自己定制component , 在服务器启动时加载，完成一定的功能
+* start, afterStart, stop 
+* 导出工厂函数，而不是一个对象，app会将自己作为上下文信息以及后面的opts作为参数传递给这个函数，并返回一个component 对象
+* app.load(componentName);
+
+#### 增加admin module 
+* 线上admin 工具
+* 三主体：master,monitor,client
+* 注册admin module; app.registerAdmin(moduleName,{app:app});
+* moduleId , monitorHandler,masterHandler,clientHandler
+
+##### admin module
+![adminModule](http://img.hb.aicdn.com/235999b270ec8c35b2137ade7760263981b0314918611-YkzDZR_fw658)
+##### register admin
+![resigter admin](http://img.hb.aicdn.com/b43559c1b702de7d9a5e2060830798322cab8a8813d1c-3Szh64_fw658)
 
 
 >到此pomelo的介绍算是结束了
-
 
 
 
