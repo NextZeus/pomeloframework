@@ -138,10 +138,63 @@
 
 ##### process admin module
 ![adminModule](http://img.hb.aicdn.com/235999b270ec8c35b2137ade7760263981b0314918611-YkzDZR_fw658)
+
 * 线上admin , client 向master服务器发送request，请求中带有moduleId和对应的回调参数
 
 ###### module request 
 ![admin request](https://github.com/NetEase/pomelo/wiki/images/sd_admin.png)
+
+#### 热更新
+* hot文件夹下
+
+
+
+```
+#例子
+
+var Handler = function(app) {
+    this.app = app;
+    this.channelService = app.get('channelService');
+};
+
+var handler = Handler.prototype;
+
+handler.send = function(msg,session,next){
+    next();
+};
+
+module.exports = {
+    id: "chatHandler",
+    func: Handler
+};
+
+```
+
+#### bearcat
+* context.json 配置
+
+```
+{
+	"name": "arpg_name",
+	"beans": [],
+	"scan": "app"
+}
+
+```
+
+* createApp 
+
+```
+var contextPath = require.resolve('./context.json');
+bearcat.createApp([contextPath]);
+
+bearcat.start(function() {
+    Configure(); //app configure
+    // start app
+    app.start();
+});
+
+```
 
 
 
