@@ -138,7 +138,58 @@
 ![resigter admin](http://img.hb.aicdn.com/b43559c1b702de7d9a5e2060830798322cab8a8813d1c-3Szh64_fw658)
 
 
->到此pomelo的介绍算是结束了
+## pomelo服务器启动过程
+
+### 启动过程
+
+> pomelo start
+
+> pomelo start 启动master服务器， master服务器调用进程创建子进程,即应用服务器
+
+![process](http://img.hb.aicdn.com/37178ff5e355f4dcb4f7ea8fc6ffb782224527ab160f4-Ljz5BA_fw658)
+> node <BasePath>/app.js env=development id=connector-server-1
+
+#### Application 初始化
+
+![init](https://github.com/NetEase/pomelo/wiki/images/app_init.png)
+create app 创建应用
+init app 初始化应用的配置信息
+setenv 设置环境变了
+
+processArgs 创建应用服务器的处理过程 ， 就是上面的node .../app.js ....
+
+应用创建成功之后， 还会对app进行一些设置，比如服务器的路由设置，以及上下文变量的设置
+
+
+### Master服务器启动
+![master](https://github.com/NetEase/pomelo/wiki/images/sd_master.png)
+* app.start() 后，加载默认的组件，对于master来说加载的组件为master和monitor组件
+* Master组件的创建过程会创建MasterConsole, MasterConsole会创建MasterAgent, MasterAgent会创建监听Socket, 用来监听应用服务器的监控和管理请求
+* 加载完组件后，会启动所有的组件。Master有自己的组件，还会启动用户自定义的Module, 在app.start()之前调用app.registerAdmin 挂在app上
+* 所有的Module挂到app后，Master组件会启动MasterConsoleService.启动MasterConsoleService时，MasterConsoleService会从app处拿到所有挂在其上面的Module，然后将Module注册到自己的Module仓库中，这一步实际上就是Module放到一个以ModuleId做键的Map中，以使得后来有请求时，可以直接进行查询回调
+* 然后开启MasterAgent监听，此时，Master组件就可以接受监控管理请求了
+* 下一步，启动所有的Module. 
+* 启动所有的应用服务器。Master组件完成了所有的其自身的Module的初始化和开启任务后，Master会委托Starter完成整个服务器群的启动。  Master服务器负责管理所有应用服务器
+
+### 应用服务器启动
+* 参数启动 
+* 配置 app.configure('production|development', 'chat',function(){.....}) 配置数据库以及其他配置信息
+* 细节的东西比较多 不一一讲了
+
+### 服务器关闭
+* 线上服务器可通过自定义Module工具停服
+
+
+
+
+
+
+
+### 简单介绍完毕
+
+>到此pomelo的简单介绍算是结束了 要说的东西实在不是一句两句能说完的 大家可以去Github上去看文档 
+
+
 
 
 
