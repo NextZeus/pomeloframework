@@ -132,10 +132,17 @@
 * 注册admin module; app.registerAdmin(moduleName,{app:app});
 * moduleId , monitorHandler,masterHandler,clientHandler
 
-##### admin module
-![adminModule](http://img.hb.aicdn.com/235999b270ec8c35b2137ade7760263981b0314918611-YkzDZR_fw658)
 ##### register admin
 ![resigter admin](http://img.hb.aicdn.com/b43559c1b702de7d9a5e2060830798322cab8a8813d1c-3Szh64_fw658)
+
+
+##### process admin module
+![adminModule](http://img.hb.aicdn.com/235999b270ec8c35b2137ade7760263981b0314918611-YkzDZR_fw658)
+* 线上admin , client 向master服务器发送request，请求中带有moduleId和对应的回调参数
+
+###### module request 
+![admin request](https://github.com/NetEase/pomelo/wiki/images/sd_admin.png)
+
 
 
 ## pomelo服务器启动过程
@@ -177,6 +184,7 @@ processArgs 创建应用服务器的处理过程 ， 就是上面的node .../app
 * 细节的东西比较多 不一一讲了
 
 ### 服务器关闭
+* pomelo stop
 * 线上服务器可通过自定义Module工具停服
 
 
