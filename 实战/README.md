@@ -116,7 +116,9 @@ var Configure = function(){
         服务器机器人的初始化
         清理redis缓存信息
         等等
-        ＊／           
+        ＊／
+        //清理停服状态  每次停服都是先设置状态 再主动踢出玩家 
+        global.app.redis.get('gameServerStatus',function(){});           
     });
     
 }
@@ -232,6 +234,202 @@ exports.mysql = function(){
 
 ```
 
+### router函数设置
+```
+var serversConfig = require('../../config/servers.json');
+
+exp.chat = function (route, msg, app, cb) {
+    var chat = app.getServersByType('chat')[0];
+    if (!chat) {
+        console.log('failed to route to chat.');
+        return;
+    }
+    cb(null, chat.id);
+};
+
+exp.connector = function (frontendId, msg, app, cb) {
+    if (!frontendId) {
+        console.log('failed to route to connector.');
+        return;
+    }
+    cb(null, frontendId);
+};
+
+//gate服务器
+exp.gate = function (serverId, msg, app, cb) {
+    var gate = app.getServersByType('gate')[0];
+    if (!gate) {
+        console.log('failed to route to gate.');
+        return;
+    }
+    cb(null, gate.id);
+}
+
+/*
+data 应用服务器 应用服务器的设置 可能会比较复杂一些，因为应用服务器会比gate,connector服务器要多
+第一个参数session , 在我们的应用里有可能是session, characterId[string] 
+*/
+exp.data = function (session, msg, app, cb) {
+    var env = app.env;
+    var envConfig = serversConfig[env];
+    var servers = envConfig['data'];
+    var data,index ;
+    var charId;
+
+    if(!!session && typeof(session) == 'object'){
+        if(typeof(session.get) == 'function'){
+            charId  = session.get('character_id');
+        }
+
+        if(!charId){//没有角色Id的情况 : 没有登录和同步
+            //index = parseInt(Math.random() * servers.length);
+            index = servers.length - 1;
+        } else {
+            index = parseInt(charId) % servers.length ;
+        }
+    }else if(session && (typeof(session) == 'string' || typeof(session) == 'number')){
+        index = session % servers.length ;
+    }else{
+        index = parseInt(Math.random() * servers.length);
+    }
+
+    data = servers[index];
+
+    cb(null, data.id);
+}
+
+```
+
+### glboalErrorHandler
+
+```
+//错误码对照表
+var errCode = require('../../lib/errCode');
+如下
+"chat.chatHandler.send":{
+	"error_code":1001 //策划填写错误提示
+}
+
+var GlobalHandler = function(app){
+    this.app = app;
+}
+var br = require('bearcat');
+
+GlobalHandler.prototype.globalHandler = function(err, msg, resp, session, next){
+    var route = msg.route || msg.__route__ ;
+    var charId = session.get('character_id');//登陆的时候 会把角色ID放到session中
+    var mailModel = br.getBean('sendMailModel');
+    var backendSessionService = this.app['backendSessionService'];
+
+    if(err){
+        if('no_redis_char' == err || 'redis_err' == err){
+            backendSessionService.kickBySid(session.frontendId,session.id,function(err){
+                if(err){
+                    mailModel.sendMail(new Error('======>>>>kick char err').stack);
+                }
+            });
+        }else if('update_redis_char' == err){
+            //更新缓存错误
+            backendSessionService.kickBySid(session.frontendId,session.id,function(err){
+                if(!err){
+                    global.app.rpc.redis.delete('char_' + charId ,function(err){
+                        if(err){
+                            mailModel.sendMail(new Error('redis del charInfo err').stack);
+                        }
+                    });
+                }
+            });
+        }else if(!!errCode[route] && !!errCode[route][err]){//错误码中有对应的错误提示
+            next(null,{status : errCode[route][err]});
+        }else if(!!err['condition_lack']){
+            next(null,{ status : 10000 ,conditionId : err['condition_lack'].conditionId });
+        }else if('redis_err' == err) {
+            mailModel.sendMail(err.stack);
+        }else if(!!err.status){
+            next(null,err);
+        }else {
+            console.log('此错误没有对应状态码!!!!!!!!',err);
+            next(null,{status : 500});
+        }
+    }else{
+        next(null,err);
+    }
+}
+
+module.exports = GlobalHandler;
+
+```
+
+
+
+### gate 
+
+```
+
+var dispatcher = require('../../../util/dispatcher');
+var pomelo = require('pomelo');
+var bearcat = require('bearcat');
+var async = require('async');
+var util = bearcat.getBean('util');
+
+
+var Handler = function() {
+    this.$id = 'gateHandler';
+    this.app = pomelo.app;
+};
+
+var handler = Handler.prototype;
+
+
+handler.queryEntry = function(msg,session,next){
+	var self = this;
+	var connectors = self.app.getServersByType('connector');
+    if(!connectors || connectors.length === 0) {
+        next(null, {
+            status: 500
+        });
+        return;
+    }
+    
+    async.waterfall([
+        function(cb){
+        	//查看服务器是否处于停服状态 状态存储在redis缓存中 设置master时，delete掉
+            global.app.redis.get('gameServerStatus',function(err,data) {
+                if (!err && !data) {
+                    next(null, {status: 430});
+                    return;
+                }
+                cb(err);
+            });
+        },
+        function(cb){
+            global.app.rpc.chat.chatRemote.getOnlinePlayersNumber(null,function(err,data){
+                console.log('服务器同时在线人数==',data,serverLimit);
+                if(!err){
+                	 //查看服务器在线人数是否超过限制
+                    if(data >= serverLimit){
+                        next(null,{ status : 888});
+                        return;
+                    }
+                } else {
+                    next(null,{ status : 500});
+                    return;
+                }
+                cb();
+            });
+        }
+    ], function (err) {
+    	//分配一个connector服务器 ；算法是Math.random()*connectorServers.length
+        var res = dispatcher.dispatch(session.id,connectors);
+        next(null, {
+            status: 0,
+            host: res.host,
+            port: res.clientPort
+        });
+    });
+}
+
+```
 
 
 
