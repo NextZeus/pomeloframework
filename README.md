@@ -326,8 +326,87 @@ var Configure = function(){
         });
 
     });
+    
+    
+    //gate服务器配置 
+    app.configure('production|development', 'gate', function () {
+        app.set('connectorConfig',
+            {
+                connector: pomelo.connectors.hybridconnector,
+                heartbeat: 8, //心跳
+                useDict: true,
+                useProtobuf: true,
+                disconnectOnTimeout: true 超时断开连接
+            });
+    });
+    
+    //chat 服务器配置
+    app.configure('production|development', 'chat', function () {
+
+    });
+    
+    //connector服务器配置
+    app.configure('production|development', 'connector', function () {
+        app.set('connectorConfig',
+            {
+                connector: pomelo.connectors.hybridconnector,
+                heartbeat: 8,
+                useDict: true,
+                useProtobuf: true,
+                disconnectOnTimeout : true
+            });
+    });
+    
+    //data 应用服务器配置
+    app.configure('production|development', 'data', function () {
+	    //配置mysql
+        var mysqlConf = app.myLoader.load(__dirname + '/config/mysql.js');
+        app['mysql'] = app.myLoader.load(__dirname + '/lib/mysql.js');
+        app['mysql'].config(mysqlConf);
+        global.app.mysql = app.mysql;
+    });
+    
+    //master
+    app.configure('production|development', 'master', function() {
+        /＊
+        这里可以写一些初始化服务器的功能 比如说删除一些以前的无用信息
+        服务器机器人的初始化
+        清理redis缓存信息
+        等等
+        ＊／           
+    });
+    
 }
 
+//use bearcat start app
+var contextPath = require.resolve('./context.json');
+bearcat.createApp([contextPath]);
+
+bearcat.start(function() {
+    Configure();
+    // start app
+    app.start();
+});
+
+//配置日志信息格式
+var logger = require('pomelo-logger').configure(path.join(app.getBase(),'/lib/log4js.json'),{base : app.getBase()});
+
+
+//异常错误捕捉处理
+process.on('uncaughtException',function(err){
+	//错误日报 发送邮件 nodemailer库
+    var mailModel = bearcat.getBean('sendMailModel');
+    mailModel.sendMail(err.stack);
+});
+
+
+//正式环境 去掉connsole log输出
+var env = app.get('env');
+if(env != 'development'){
+   console.log = function(){};
+   console.info = function(){};
+   console.warn = function(){};
+}
 
 ```
 
