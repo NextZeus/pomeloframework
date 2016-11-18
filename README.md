@@ -255,9 +255,81 @@ processArgs 创建应用服务器的处理过程 ， 就是上面的node .../app
 
 
 
-## 实战
+## 实战[以下是我之前的项目部分代码]
+
+### app.js
 
 
+```
+var pomelo = require('pomelo');
+var zmq = require('pomelo-rpc-zeromq');
+var bearcat = require('bearcat');
+var mysql = require('mysql');
+var path = require('path');
+
+//mysql config
+var mysqlConfig = require('./config/mysql.js');
+
+
+
+var app = pomelo.createApp();
+app.set('name','appname');
+
+//全局变量设置 有个地方会用到
+global.app = pomelo.app;
+
+//下面设置的变量 在自定义pomelo-cli工具会用到 如果不挂载在app上 其他地方引用不到
+global.app.bearcat = bearcat;
+global.app.async = async;
+global.app.mysqlModule = mysql;
+global.app.mysqlConfig = mysqlConfig;
+
+
+//最重要的配置服务器
+
+var Configure = function(){
+	app.configure('production|development', function () {
+		//todo 坑 ： 加上之后服务器启动之后 一会儿就会宕机 尚未找到原因
+        //app.enable('systemMonitor'); 
+
+        app['myLoader'] = myLoader;
+        app['redis'] = app.myLoader.load(__dirname + '/lib/redis.js');
+        //设置路由函数router
+        var routeUtil = app.myLoader.load(__dirname + '/app/util/route.js');
+        app.route('chat', routeUtil.chat);
+        app.route('gate', routeUtil.gate);
+        app.route('connector', routeUtil.connector);
+        app.route('data', routeUtil.data);
+       
+
+        //全局路由过滤函数
+        var globalFilter = require('./app/servers/filter/globalFilter.js');
+        app.globalFilter(globalFilter()); //处理未登录玩家 黑名单 白名单等
+
+        //全局错误处理
+        var GlobalHandler = require('./app/globalHandler/globalErrorHandler.js');
+        var globalErrorHandler = new GlobalHandler();
+        app.set('globalErrorHandler',globalErrorHandler.globalHandler);
+        app.set('errorHandler',globalErrorHandler.globalHandler);
+
+        app.connDispatch = {};//链接调度
+        app.roomDispatch = {};//房间调度
+
+		//rpc client 
+        app.set('proxyConfig', {
+            rpcClient: zmq.client
+        });
+		
+		//rpc server
+        app.set('remoteConfig', {
+            rpcServer: zmq.server
+        });
+
+    });
+}
+
+
+```
 
 
 
