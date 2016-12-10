@@ -156,7 +156,7 @@ if(env != 'development'){
 ```
 
 ## 配置文件
-### package.json 主要是版本
+### package.json 主要是版本 node版本 0.10.26
 ```
 {
   "name": "appname",
@@ -300,11 +300,11 @@ exp.data = function (session, msg, app, cb) {
 
 ```
 
-### glboalErrorHandler
+### globalErrorHandler
 
 ```
 //错误码对照表
-var errCode = require('../../lib/errCode');
+var errCode = require('errCode.json');
 如下
 "chat.chatHandler.send":{
 	"error_code":1001 //策划填写错误提示
@@ -429,10 +429,166 @@ handler.queryEntry = function(msg,session,next){
     });
 }
 
+//导出工厂函数
+module.exports = function(){
+	return bearcat.getBean(Handler);
+}
+
 ```
 
+queryEntry分配 connector服务器之后， 这时候应该是进入到选择角色界面，一个玩家可以有多个角色，查询服务器该账号下的角色信息。 
 
 
+```javascript
+
+<!--connector.connectorHandler.login-->
+
+var EntryHandler = function() {
+  this.$id = 'entryHandler';
+  this.app = pomelo.app;
+};
+
+EntryHandler.prototype.login = function(msg, session, next) {
+    var self = this;
+    var cid = parseInt(msg.cid) || null;  //账号id
+    var areaId = parseInt(msg.areaId);
+
+    if(!areaId){
+        console.log('login no areaId',cid);
+        next(null,{status : 500});
+        return;
+    }
+    if(!cid){
+        console.log('cid_is_not_number');
+        next(null,{status : 500});
+        return;
+    }
+
+    var sessionService = self.app.get('sessionService');
+    var roleInfo = [];
+    var charidArr = [];
+    var channelId = -1;
+    var util = bearcat.getBean('util');
+    var bagDao = bearcat.getBean('bagDao');
+    var host = session.__session__.__socket__.remoteAddress.ip;
+    async.waterfall([
+        function (callback) { //web端登陆验证
+            var webServer = require('../../../../config/webServer.json');
+            var server = require('../../../../config/servers.json');
+            if (!webServer || !server) {
+                callback({err: '没有web端登陆配置文件'});
+            }
+            var area = app.get('myServerId');
+            var url = 'http://' + webServer.host + (webServer.port ? (":" + webServer.port) : '') +
+                "/game/charLogin?userId=" + cid + "&sesId=" + msg.sessionid + '&areaId=' + area;
+            request.get(url, function (err, data) {
+                console.log('connector.entryHandler.login==00',cid,err);
+                callback(err, data);
+            });
+        },
+        function(info,callback){
+            if((info.statusCode == 302 || info.statusCode == 200) && JSON.parse(info.body).status == 0){//以登陆 获取redis中缓存数据
+                channelId = JSON.parse(info.body).channel || -1;
+                callback();
+            } else {
+                next(null,JSON.parse(info.body));
+                return;
+            }
+        },
+        function(callback){
+            var connectServers = self.app.getServersByType('connector');
+            var backendSessionService = self.app['backendSessionService'];
+            if(!!backendSessionService && connectServers && connectServers.length > 0){
+                async.map(connectServers,function(server,cb){
+                    //踢掉当前账号其他角色
+                    backendSessionService.kickByUid(server.id,cid,function(err){
+                        cb(err);
+                    });
+                },function(err){
+                    callback(err);
+                })
+            }else{
+                console.log('connector服务器可能挂掉');
+                next(null,{status : 500});
+                return;
+            }
+        },
+        function(callback){
+            if(!!cid){
+                //session 信息保存
+                session.bind(cid);
+                session.set("cid",cid);
+                session.set("sessionId",session.id);
+                session.set("channelId", channelId);
+                session.set("host", host);
+                session.set("areaId", areaId);
+                
+                //绑定用户退出游戏事件
+                session.on('closed', onUserLeave.bind(null, self.app,session));
+                callback();
+            }else{
+                next(null,{status:8});
+                return ;
+            }
+        },
+        function(cb){
+            var areaId = parseInt(msg.areaId); //游戏区号
+            global.app.rpc.data.dataRemote.searchRole(null,parseInt(cid),areaId,function(err,data){  //查询角色
+                if(!err && !!data && data.length > 0){
+                    roleInfo = data;
+                    cb();
+                }else if(!err && data.length == 0){
+                    console.log('需要新建');
+                    next(null,{status: 5});
+                    return;
+                }else{
+                    console.log(err,data);
+                    cb({err: '查询角色信息错误!'});
+                }
+            });
+        }
+        ],function(err){
+            if(!err){
+                if(!!roleInfo && roleInfo.length > 0){
+                    for(var i= 0; i < roleInfo.length;i++){
+                       delete roleInfo[i].value;
+                    }
+                    next(null, {status : 0,info : roleInfo});
+                } else {
+                    next(null,{ status : 0,info : []});
+                }
+            }else{
+                next(null,{status: 500});
+            }
+        }
+    )
+};
+
+
+function onUserLeave(app, session) {
+    var charId;
+    charId = session.get('character_id');
+    if(!charId && session.__session__){
+        charId = session.__session__.get('character_id');
+        if(!charId){
+            console.log('onUserLeave=_no_charId');
+            return;
+        }
+    }
+
+    var cid = session.get('cid');
+    var fid = session.frontendId;
+    var userObj = session.__session__.get('user');
+    
+    //踢出
+    app.rpc.chat.chatRemote.kick(null, session.uid, app.get('serverId'), function(){});
+    //做其他一些处理
+    app.rpc.data.dataRemote.onCharLeaveGame(charId,charId,cid,userObj,fid, session.id, function(){});
+};
+
+
+
+```
 
 
 
