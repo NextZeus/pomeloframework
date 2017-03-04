@@ -1,0 +1,61 @@
+
+使用pomelo-node-tcp-client 替代原有代码中的pomelo client
+
+pomelo.init:   每次pomelo.init 必须new Pomelo() 新建一个client
+
+bytearray decode 失败
+换库： bytearray2
+
+
+pomelo-admin-web
+error: GET http://127.0.0.1:3005/socket.io/1/?t=1487663213876 net::ERR_EMPTY_RESPONSE
+
+upgrade socket.io version -> 1.7.2
+
+https://github.com/socketio/socket.io-client/blob/master/dist/socket.io.js
+
+
+没有数据： config/admin.json localhost->127.0.0.1 
+
+install sysstat
+
+install pidstat
+
+mmorpg 大型多人在线角色扮演游戏
+arpg 动作角色扮演游戏
+
+开场：
+	自我介绍
+	参与过开发的游戏： 
+	疾风三国 http://tieba.baidu.com/f?kw=%E7%96%BE%E9%A3%8E%E4%B8%89%E5%9B%BD%E6%89%8B%E6%B8%B8
+	时时对战游戏［多种第三方小游戏］
+
+框架介绍
+	框架特点
+	应用场景：德州扑克 ARPG
+	支持分布式部署
+	支持热更新
+
+
+辅助工具：
+	机器人测试
+	pomelo-robot
+	pomelo-robot-demo
+	https://github.com/NetEase/pomelo/wiki/PomeloRobot-%E4%BD%BF%E7%94%A8%E6%96%87%E6%A1%A3
+
+	web admin 
+	pomelo-admin
+	pomelo-admin-web 
+	https://github.com/NetEase/pomelo/wiki/pomelo-admin-web%E5%B7%A5%E5%85%B7%E7%9A%84%E4%BD%BF%E7%94%A8
+	https://github.com/NetEase/pomelo/wiki/%E5%A2%9E%E5%8A%A0admin-module
+
+
+	pomelo-cli
+	https://github.com/NetEase/pomelo/wiki/Pomelo-cli%E4%BD%BF%E7%94%A8
+	https://github.com/NetEase/pomelo/wiki/pomelo-cli-exec%E5%91%BD%E4%BB%A4%E4%BD%BF%E7%94%A8
+
+	pomelo-daemon 集群
+	https://github.com/NetEase/pomelo/wiki/Pomelo-daemon%E7%9A%84%E4%BD%BF%E7%94%A8
+
+	分布式部署
+	https://github.com/NetEase/pomelo/wiki/Pomelo%E7%9A%84%E5%88%86%E5%B8%83%E5%BC%8F%E9%83%A8%E7%BD%B2%E6%96%B9%E6%B3%95
