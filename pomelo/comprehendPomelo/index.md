@@ -1,0 +1,35 @@
+# 重新认识Pomelo
+
+- lordofpomelo 服务器设计，大概是下面这样
+	- app
+		- servers	
+			- gate
+				- gateHandler
+			- connector
+				- entryHandler 
+			- area
+				- filter
+				- handler
+				- remote
+			- auth
+				- remote
+			- chat
+				- filter
+				- handler
+				- remote
+			- manager 
+				- remote
+			- path
+				- remote
+		- services
+			- areaService
+			- chatService
+			- instanceManager
+			- teamManager
+		- modules
+		- domain
+			- 真正处理业务逻辑的地方
+		- dao
+		- consts
+		- ai
+		- util ［工具库］

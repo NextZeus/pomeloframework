@@ -13,8 +13,6 @@ var path = require('path');
 //mysql config
 var mysqlConfig = require('./config/mysql.js');
 
-
-
 var app = pomelo.createApp();
 app.set('name','appname');
 
