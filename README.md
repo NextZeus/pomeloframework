@@ -52,6 +52,7 @@ Client.prototype = {
 2. pomelo/lib/common/service/connectionService.js 这里会存储一些登录玩家计数信息
 
 ```
+
 var Service = function(app) {
   this.serverId = app.getServerId();
   this.connCount = 0;
@@ -108,39 +109,6 @@ pro.updateUserInfo = function(uid, info) {
 };
 
 /**
- * Increase connection count
- */
-pro.increaseConnectionCount = function() {
-  this.connCount++;
-};
-
-/**
- * Remote logined user
- *
- * @param uid {String} user id
- */
-pro.removeLoginedUser = function(uid) {
-  if(!!this.logined[uid]) {
-    this.loginedCount--;
-  }
-  delete this.logined[uid];
-};
-
-/**
- * Decrease connection count 玩家离线 
- *
- * @param uid {String} uid
- */
-pro.decreaseConnectionCount = function(uid) {
-  if(this.connCount) {
-    this.connCount--;
-  }
-  if(!!uid) {
-    this.removeLoginedUser(uid);
-  }
-};
-
-/**
  * Get statistics info  获取玩家在线信息
  *
  * @return {Object} statistics info
@@ -153,6 +121,12 @@ pro.getStatisticsInfo = function() {
 
   return {serverId: this.serverId, totalConnCount: this.connCount, loginedCount: this.loginedCount, loginedList: list};
 };
+
+
+
+//登录的时候 将玩家信息存储到__connection__组件中
+var connectionService = pomelo.app.components.__connection__;
+connectionService.updateUserInfo(uid,playerInfo);
 
 
 ```
