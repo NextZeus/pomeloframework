@@ -149,4 +149,8 @@ $ pomelo start --help
     -d, --directory, <directory>  the code directory
     -t, --type <server-type>,     start server type
     -i, --id <server-id>          start server id
+
 ```
+
+具体的help 在 pomelo/bin/pomelo.js中 ;
+我只能帮你到这了。。。
