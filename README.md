@@ -130,3 +130,23 @@ connectionService.updateUserInfo(uid,playerInfo);
 
 
 ```
+## poemlo start 后面有-D 是后台运行么？比方关闭shell 端口还在？
+
+```
+推荐你使用 pomelo help , 
+
+$: pomelo start --help
+
+$ pomelo start --help
+
+  Usage: start [options]
+
+  Options:
+
+    -h, --help                    output usage information
+    -e, --env <env>               the used environment
+    -D, --daemon                  enable the daemon start
+    -d, --directory, <directory>  the code directory
+    -t, --type <server-type>,     start server type
+    -i, --id <server-id>          start server id
+```
