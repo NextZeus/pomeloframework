@@ -154,3 +154,7 @@ $ pomelo start --help
 
 具体的help 在 pomelo/bin/pomelo.js中 ;
 我只能帮你到这了。。。
+
+## pomelo统计在线人数
+
+详情请看源码: pomelo/lib/service/connectionService.js 
