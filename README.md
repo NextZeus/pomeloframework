@@ -224,3 +224,13 @@ server {
 url:	'wss://pomelo.game.com:3014'
 ```
 
+## dump memory 
+1. install pomelo-cli2 -g
+2. install heapdump at /usr/lib/node_modules/pomelo-cli2/ 
+3. use gate-server-1
+4. dump memory /home/node/dump --force
+
+#### dump memory 遇到的Error 
+1. pomelo-admin need heapdump 
+solution: npm install heapdump -s at /usr/lib/node_modules/pomelo-cli2/ 
+2. 需要gcc version 4.8+
