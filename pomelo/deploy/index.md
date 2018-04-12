@@ -38,9 +38,8 @@ master.json
 参考：https://github.com/NetEase/pomelo/issues/719
 
 ## Zeromq
-服务器需要安装zeromq，不管是Debian 还是 Centos.
-zeromq 在配置proxyClient, remoteServer时会用到。
-zeromq我没有做深入的了解，以后了解了，会分享出来。
+
+如果proxyConfig, remoteConfig 选择zmq作为client,server, 服务器需要安装zeromq，不管是Debian 还是 Centos.
 
 ## Debian Ubuntu14.04
 [参考官网install debian/zeromq](http://zeromq.org/distro:debian)

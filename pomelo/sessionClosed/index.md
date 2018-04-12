@@ -1,4 +1,4 @@
-#session closed
+# session closed
 
 ```
 session on [connector-server-1] is closed with session id: 1
