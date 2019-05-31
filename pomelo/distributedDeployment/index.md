@@ -96,8 +96,13 @@ servers.json
 
 ##### sshrun 默认端口22
 
-这个问题我没有遇到 😄
+
 [ssh_config_params](http://nodejs.netease.com/topic/5355d7f4ccd0c8ef284bd70a)
 [分布式部署ssh端口不是默认的22怎么办](https://github.com/NetEase/pomelo-cn/issues/260)
 
+###### 设置ssh其他端口
+
+```
+  app.set('ssh_config_params', ['-p 设置端口']);  
+```
 
